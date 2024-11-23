@@ -20,6 +20,12 @@ db_file = 'kids_chores.db'
 class TaskDatabaseSQL():
     
     def __init__(self):
+        '''Tato trida pouziva sqlite3
+        
+        pokud na soboru neexistuje, tak se vytvori priklad databaze s 15 tasky
+        '''
+        
+        
         self.db_file = db_file
         if not os.path.exists(self.db_file):
             conn = sqlite3.connect(self.db_file)
@@ -65,6 +71,8 @@ class TaskDatabaseSQL():
 
 
     def _query_to_dicts(self,query, params=()):
+        '''Vraci odpoved na query jako list of dicts
+        '''
         conn = sqlite3.connect(self.db_file)
         conn.row_factory = sqlite3.Row  # This allows dict-like access to rows
         cursor = conn.cursor()
@@ -96,20 +104,40 @@ class TaskDatabaseSQL():
         
 
     def get_all_tasks(self) -> list:
+        '''Vraci list of dicts vsech tasku v databazi
+        '''
         resp = self._query_to_dicts('SELECT * FROM home_jobs')
         return resp
     
-    def get_active_tasks(self) -> dict:
+    def get_active_tasks(self) -> list:
+        '''Vraci list of dicts vsech aktivnich tasku v databazi
+        '''
         resp = self._query_to_dicts('SELECT * FROM home_jobs WHERE is_done = FALSE')
         return resp
 
 
     def get_task(self, task_id: int) -> dict:
+        '''Vraci dict pozadovaneho tasku (dle task_id)
+        '''
         resp = self._query_to_dicts('SELECT * FROM home_jobs WHERE task_id = ?', (task_id,))
         return resp[0]
 
 
     def _delete_job_by_id(self,task_id: int):
+        '''Smaze polozku databaze (dle task_id)
+
+
+        Parameters
+        ----------
+        task_id : int
+            DESCRIPTION.
+
+        Returns
+        -------
+        bool
+            DESCRIPTION.
+
+        '''
         conn = sqlite3.connect(self.db_file)
         conn.row_factory = sqlite3.Row  # This allows us to access columns by name
         cursor = conn.cursor()
@@ -136,6 +164,20 @@ class TaskDatabaseSQL():
 
     
     def update(self,task_dict: dict):
+        '''
+        updatuje dany task
+
+        Parameters
+        ----------
+        task_dict : dict
+            task.
+
+        Returns
+        -------
+        bool
+            1 if succes else 0.
+
+        '''
         task_id = task_dict.get('task_id')
         keys = ['is_done','done_at','done_by','waiting']
         set_values = ', '.join([f"{key} = ?" for key in keys])
@@ -161,6 +203,24 @@ class TaskDatabaseSQL():
 
 
     def waiting_rewards(self,done_by: int , days: int = 4):
+        '''
+        Vraci list of dicts tasku, ktere maji status waiting (odlozeny vyber)
+        a jsou v databazi jako is_done dele nez xy dnu
+        
+        Parameters
+        ----------
+        done_by : int
+            uzivatel_id.
+        days : int, optional
+            days in database as done. The default is 4.
+
+        Returns
+        -------
+        list
+            list of dicts.
+
+        '''
+        
         resp = self._query_to_dicts('SELECT * FROM home_jobs WHERE waiting = ?', (True,))
         resp = [r for r in resp if (r['done_by']==done_by) and ((datetime.now() - r['done_at']).days>=days)]
         return resp

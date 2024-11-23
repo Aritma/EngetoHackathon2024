@@ -22,7 +22,8 @@ class TaskDatabase():
     
     def __init__(self):
 
-
+        '''Tato trida pouziva pandas DataFrame jako databazi, ktera bezi v pameti
+        '''
 
         '''
         hardcoded database...
@@ -106,11 +107,19 @@ class TaskDatabase():
     
     
     def update(self, task_dict: dict):
-        '''update databaze
-            vstup: task (dict)
-            najde dany radek - vymaze ho - a appenduje vstup
-            1...done
-            0...failed
+        '''
+        updatuje dany task
+
+        Parameters
+        ----------
+        task_dict : dict
+            task.
+
+        Returns
+        -------
+        bool
+            1 if succes else 0.
+
         '''
         
         # print(task['task_id'])
@@ -133,6 +142,23 @@ class TaskDatabase():
 
 
     def waiting_rewards(self,done_by: int, days:int =4):
+        '''
+        Vraci list of dicts tasku, ktere maji status waiting (odlozeny vyber)
+        a jsou v databazi jako is_done dele nez xy dnu
+        
+        Parameters
+        ----------
+        done_by : int
+            uzivatel_id.
+        days : int, optional
+            days in database as done. The default is 4.
+
+        Returns
+        -------
+        list
+            list of dicts.
+
+        '''
         
         df = self.db
         df
