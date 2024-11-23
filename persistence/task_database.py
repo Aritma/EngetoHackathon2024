@@ -105,7 +105,7 @@ class TaskDatabase():
 
     
     
-    def update(self, task: dict):
+    def update(self, task_dict: dict):
         '''update databaze
             vstup: task (dict)
             najde dany radek - vymaze ho - a appenduje vstup
@@ -116,13 +116,16 @@ class TaskDatabase():
         # print(task['task_id'])
         
         df = self.db
+
+        
+        
         # print(df)
-        df = df[~(df['task_id']==task['task_id'])]
+        df = df[~(df['task_id']==task_dict['task_id'])]
         # print(df)
         # task['done_at'] = datetime.now()
         
         
-        df_new = pd.DataFrame([task],columns=self.columns)
+        df_new = pd.DataFrame([task_dict],columns=task_dict.keys())
         
         self.db = pd.concat([df,df_new])
 
@@ -163,9 +166,9 @@ if __name__=='__main__':
     db = TaskDatabase()
     self=db
     
-    print(   db.get_all_tasks()   )
-    print(   db.get_active_tasks()   )
-    print(   db.get_task(1)   )
+    # print(   db.get_all_tasks()   )
+    # print(   db.get_active_tasks()   )
+    # print(   db.get_task(1)   )
 
 
     print('-'*40)
@@ -174,7 +177,7 @@ if __name__=='__main__':
 
     task_ids = [r['task_id'] for r in db.get_all_tasks() ]
     task_id = task_ids[0]
-
+    print(f'task_id={task_id}')
     print('-'*40)
     r = db.get_task(task_id) 
 
