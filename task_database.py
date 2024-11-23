@@ -87,19 +87,16 @@ class TaskDatabase():
             1...done
             0...failed
         '''
-        try:
-            df = self.db
-            
-            # ix = np.where(df['task_id']==task_id)[0]
-            
-            ix = df.index[df['task_id']==task_id]
-            
-            df.at[ix,'is_done'] = True
-            
-            return 1
-        except Exception as exc:
-            print(exc)
-            return 0
+
+        df = self.db
+        
+        # ix = np.where(df['task_id']==task_id)[0]
+        
+        ix = df.index[df['task_id']==task_id]
+        
+        df.at[ix,'is_done'] = True
+        
+
     
     
     def update(self, task: dict):
@@ -109,21 +106,16 @@ class TaskDatabase():
             1...done
             0...failed
         '''
-        try:
-            df = self.db
+
+        df = self.db
+        
+        df = df[~df['task_id']==task['task_id']]
+        
+        df_new = pd.DataFrame(task)
+        
+        self.db = pd.concat([df,df_new])
             
-            df = df[~df['task_id']==task['task_id']]
-            
-            df_new = pd.DataFrame(task)
-            
-            self.db = pd.concat([df,df_new])
-            
-            
-            return 1
-        except Exception as exc:
-            print(exc)
-            return 0
-    
+
         
         
     
