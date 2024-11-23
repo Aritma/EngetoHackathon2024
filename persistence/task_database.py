@@ -356,45 +356,6 @@ class TaskDatabaseSQL():
         
         
         
-        
-        
-        
-        # task_id=1
-        self._delete_job_by_id(task_id)
-        
-
-        conn = sqlite3.connect(self.db_file)
-        cursor = conn.cursor()
-        
-        # Prepare the INSERT statement
-        query = '''
-            INSERT INTO home_jobs 
-            (job_name, description, reward_amount, estimated_duration_minutes, difficulty_level,is_done,done_by,done_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-        '''
-        
-        # Get values from dictionary
-        values = (
-            task_dict.get('job_name'),
-            task_dict.get('description'),
-            task_dict.get('reward_amount'),
-            task_dict.get('estimated_duration_minutes'),
-            task_dict.get('difficulty_level'),
-            task_dict.get('is_done'),
-            task_dict.get('done_by'),
-            task_dict.get('done_at'),
-            
-        )
-        
-    
-        cursor.execute(query, values)
-        conn.commit()
-        # print(f"Successfully added job: {job_dict['job_name']}")
-        
-        conn.close()
-        
-        # Return the id of the newly inserted row
-        return cursor.lastrowid
 
 
 
@@ -485,11 +446,12 @@ if __name__=='__main__':
 
     # print(   db.get_task(1)   )
 
-
+    print('-'*40)
     task_ids = [r['task_id'] for r in db.get_all_tasks() ]
     task_id = task_ids[0]
+    print(task_id)
 
-    print('-'*40)
+    
     r = db.get_task(task_id) 
     r['is_done'] = True
     r['done_by'] = 2
