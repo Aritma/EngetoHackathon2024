@@ -11,7 +11,7 @@ import pandas as pd
 import numpy as np
 
 
-task_id = 2
+
 
 
 columns = 'task_id', 'job_name',\
@@ -20,14 +20,15 @@ columns = 'task_id', 'job_name',\
             'estimated_duration_minutes',\
             'difficulty_level','created_at',\
              'is_done',\
-             'done_by'
+             'done_by',\
+             'done_at'
 
 task_database = [
-    (0,'Washing Dishes', 'Clean all dishes in the sink, load/unload dishwasher, and wipe counters', 3.50, 20, 'Easy',datetime.now(),False,None),
-    (1,'Mowing Lawn', 'Cut grass in front and back yard, trim edges, and clean up clippings', 10.00, 45, 'Hard',datetime.now(),False,None),
-    (2,'Making Bed', 'Straighten sheets, arrange pillows, and smooth out comforter', 1.00, 5, 'Easy',datetime.now(),False,None),
-    (3,'Vacuuming House', 'Vacuum all carpeted areas and rugs in the house', 5.00, 30, 'Medium',datetime.now(),False,None),
-    (4,'Taking Out Trash', 'Collect trash from all bins, replace bags, and take to outdoor container', 2.00, 10, 'Easy',datetime.now(),False,None)
+    (0,'Washing Dishes', 'Clean all dishes in the sink, load/unload dishwasher, and wipe counters', 3.50, 20, 'Easy',datetime.now(),False,None,None),
+    (1,'Mowing Lawn', 'Cut grass in front and back yard, trim edges, and clean up clippings', 10.00, 45, 'Hard',datetime.now(),False,None,None),
+    (2,'Making Bed', 'Straighten sheets, arrange pillows, and smooth out comforter', 1.00, 5, 'Easy',datetime.now(),False,None,None),
+    (3,'Vacuuming House', 'Vacuum all carpeted areas and rugs in the house', 5.00, 30, 'Medium',datetime.now(),False,None,None),
+    (4,'Taking Out Trash', 'Collect trash from all bins, replace bags, and take to outdoor container', 2.00, 10, 'Easy',datetime.now(),False,None,None)
 ]
 
 
@@ -38,7 +39,10 @@ task_database = [
 
 df = pd.DataFrame(task_database,columns=columns)#.set_index('task_id')
 df
-# fff
+
+
+df['created_at'] = [s.to_pydatetime() for s in df['created_at']]
+
 
 
 class TaskDatabase():
@@ -57,12 +61,7 @@ class TaskDatabase():
         s = df[df['task_id']==task_id].iloc[0]
         
         s = None if len(s)==0 else s.to_dict()
-        
-        # dir(s['created_at'])
-        
-        if isinstance(s,dict):
-            s['created_at'] = s['created_at'].to_pydatetime()
-        # if 
+       
         
         return s
     
@@ -72,7 +71,7 @@ class TaskDatabase():
             jako list of dicts
         '''
         df = self.db
-        return [s.to_dict for row_id,s in  df.iterrows()]
+        return [s.to_dict() for row_id,s in  df.iterrows()]
     
     
     def get_active_tasks(self) -> list:
@@ -80,7 +79,7 @@ class TaskDatabase():
             jako list of dicts
         '''
         df = self.db
-        return [s.to_dict for row_id,s in  df[df['is_done']==False].iterrows()]
+        return [s.to_dict() for row_id,s in  df[df['is_done']==False].iterrows()]
     
     def mark_done(self,task_id: int, kid_id: int = 0) -> int:
         '''oznaci task (podle task_id) jako done
@@ -111,7 +110,10 @@ class TaskDatabase():
         
         df = df[~df['task_id']==task['task_id']]
         
-        df_new = pd.DataFrame(task)
+        # task['done_at'] = datetime.now()
+        
+        
+        df_new = pd.DataFrame([task],columns=columns)
         
         self.db = pd.concat([df,df_new])
             
@@ -128,6 +130,23 @@ class TaskDatabase():
 if __name__=='__main__':
     
     db = TaskDatabase()
+    self=db
+    
+    print(   db.get_all_tasks()   )
     
     print(   db.get_active_tasks()   )
+
+    print(   db.get_task(1)   )
+
+    r = db.get_task(1) 
+    r['is_done'] = True
+    r['done_by'] = 2
+    r
+    task=r
+    
+    db.update(r)
+
+
+    df = db.db
+    print(df)
 
