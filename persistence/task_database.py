@@ -147,7 +147,7 @@ class TaskDatabase():
         # (datetime.now()-df['done_at']).to_timedelta()
         
         
-        df = df[df['days']>=4]
+        df = df[df['days']>=days]
         
         return [s.to_dict() for ii,s in df.iterrows()]
 
