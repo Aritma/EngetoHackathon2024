@@ -39,19 +39,18 @@ class AppLogic:
         if user.role == "parent":
             raise RuntimeError("Parent can't do tasks")
 
-        print(task_id)
         task = self.task_db.get_task(task_id)
         if task["is_done"]:
             raise AlreadyDoneException()
 
         task["is_done"] = True
         task["done_by"] = user_id
+        task["waiting"] = not pay_now
 
         self.task_db.update(task)
 
-        # TODO: Implement "PAY NOW"
-
-        user.balance += task["reward_amount"]
+        if pay_now:
+            user.balance += task["reward_amount"]
         self.user_storage.update_user(user)
 
         

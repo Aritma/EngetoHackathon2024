@@ -39,6 +39,11 @@ def format_task_for_response(task: dict) -> dict:
         "status": TaskStatus.ACTIVE.value if not task["is_done"] else TaskStatus.PAID.value
     }
 
+
+def str_to_bool(s: str) -> bool:
+    return s.lower() == "true"
+
+
 @app.route('/my_data', methods=['GET'])
 def user_data_endpoint():
     """ Gets all user data of user with given id.
@@ -102,7 +107,7 @@ def tasks_done_by_me_endpoint():
 @app.route('/do_task/<task_id>', methods=['POST'])
 def do_task(task_id: str):
     pay_now_str = request.args.get('pay_now')
-    pay_now = bool(pay_now_str)
+    pay_now = str_to_bool(pay_now_str)
 
     user_id = int(request.args.get('user_id'))
     user = user_store.get_user_by_id(user_id)
