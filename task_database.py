@@ -21,14 +21,15 @@ columns = 'task_id', 'job_name',\
             'difficulty_level','created_at',\
              'is_done',\
              'done_by',\
-             'done_at'
+             'done_at',\
+             'waiting'
 
 task_database = [
-    (0,'Washing Dishes', 'Clean all dishes in the sink, load/unload dishwasher, and wipe counters', 35, 20, 'Easy',datetime.now(),False,None,None),
-    (1,'Mowing Lawn', 'Cut grass in front and back yard, trim edges, and clean up clippings', 10, 45, 'Hard',datetime.now(),False,None,None),
-    (2,'Making Bed', 'Straighten sheets, arrange pillows, and smooth out comforter', 10, 5, 'Easy',datetime.now(),False,None,None),
-    (3,'Vacuuming House', 'Vacuum all carpeted areas and rugs in the house', 50, 30, 'Medium',datetime.now(),False,None,None),
-    (4,'Taking Out Trash', 'Collect trash from all bins, replace bags, and take to outdoor container', 20, 10, 'Easy',datetime.now(),False,None,None)
+    (0,'Washing Dishes', 'Clean all dishes in the sink, load/unload dishwasher, and wipe counters', 35, 20, 'Easy',datetime.now(),False,None,None,None),
+    (1,'Mowing Lawn', 'Cut grass in front and back yard, trim edges, and clean up clippings', 10, 45, 'Hard',datetime.now(),False,None,None,None),
+    (2,'Making Bed', 'Straighten sheets, arrange pillows, and smooth out comforter', 10, 5, 'Easy',datetime.now(),False,None,None,None),
+    (3,'Vacuuming House', 'Vacuum all carpeted areas and rugs in the house', 50, 30, 'Medium',datetime.now(),False,None,None,None),
+    (4,'Taking Out Trash', 'Collect trash from all bins, replace bags, and take to outdoor container', 20, 10, 'Easy',datetime.now(),False,None,None,None)
 ]
 
 
@@ -107,20 +108,30 @@ class TaskDatabase():
         '''
 
         df = self.db
-        
+        print(df)
         df = df[~df['task_id']==task['task_id']]
-        
+        print(df)
         # task['done_at'] = datetime.now()
         
         
         df_new = pd.DataFrame([task],columns=columns)
         
         self.db = pd.concat([df,df_new])
-            
 
+        print(self.db)
+
+
+    def waiting_rewards(self,days=4):
         
+        df = self.db
+        df
+        td = datetime.now()-df['done_at']
+        td.days
         
-    
+        df[(datetime.now()-df['done_at']).days>=4]
+        
+
+
 
 
 
@@ -138,6 +149,12 @@ if __name__=='__main__':
 
     print(   db.get_task(1)   )
 
+
+    print('-'*40)
+    df=self.db
+    df
+
+
     r = db.get_task(1) 
     r['is_done'] = True
     r['done_by'] = 2
@@ -145,7 +162,7 @@ if __name__=='__main__':
     task=r
     
     db.update(r)
-
+    print('-'*40)
 
     df = db.db
     print(df)
