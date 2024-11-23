@@ -1,15 +1,16 @@
-import json
-import functools
+"""Main application entrypoint."""
 
-from enum import Enum
+import functools
 
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 
-from logic.app_logic import AppLogic
+from logic.app_logic import AppLogic, Task
 from persistence.user_storage import UserData, Role, UserStorage
-from persistence.task_database import TaskDatabaseSQL
+from persistence.task_database_sql import TaskDatabaseSQL
 
+
+# Wiring up with dependency extension
 
 def validate_request(f):
   @functools.wraps(f)
@@ -36,8 +37,10 @@ logic = AppLogic(user_storage=user_store, task_db=task_db)
 app = Flask(__name__)
 CORS(app)
 
+# Presentation helpers
 
-def format_task_for_response(task: dict) -> dict:
+def format_task_for_response(task: Task) -> dict:
+    """Formats a task in the format suitable for JSON response."""
     return {
         "task_id": task.id,
         "task_name": task.task_name,
@@ -50,8 +53,11 @@ def format_task_for_response(task: dict) -> dict:
 
 
 def str_to_bool(s: str) -> bool:
+    """Parse a boolean value from string."""
     return s.lower() == "true"
 
+
+# Route handlers
 @app.route('/my_data', methods=['GET'])
 @validate_request
 def user_data_endpoint(user):
