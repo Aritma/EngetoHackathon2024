@@ -10,9 +10,11 @@ from persistence.user_storage import UserData, Role, UserStorage
 from persistence.task_database_sql import TaskDatabaseSQL
 
 
-# Wiring up with dependency extension
-
 def validate_request(f):
+  """Middleware for authenticating requests.
+  
+  This injects the user object as the first argument of the decorated handler.
+  """  
   @functools.wraps(f)
   def decorated_function(*args, **kwargs):
     user_id = request.args.get('user_id', type=int)
@@ -25,6 +27,9 @@ def validate_request(f):
     return f(user, *args, **kwargs)
   return decorated_function
 
+
+# Wiring up with dependency extension
+
 user_store = UserStorage()
 user_store.add_user(UserData(id=1, name='Alice', balance=100, role=Role.PARENT))
 user_store.add_user(UserData(id=2, name='Bob', balance=200, role=Role.CHILD))
@@ -36,6 +41,7 @@ logic = AppLogic(user_storage=user_store, task_db=task_db)
 
 app = Flask(__name__)
 CORS(app)
+
 
 # Presentation helpers
 
@@ -53,16 +59,16 @@ def format_task_for_response(task: Task) -> dict:
 
 
 def str_to_bool(s: str) -> bool:
-    """Parse a boolean value from string."""
+    """Parses a boolean value from string."""
     return s.lower() == "true"
 
 
 # Route handlers
+
 @app.route('/my_data', methods=['GET'])
 @validate_request
 def user_data_endpoint(user):
-    """ Gets all user data of user with given id.
-    """
+    """Gets all user data of user with given id."""
     response_dict = {
         'user_id': user.id,
         'name': user.name,
@@ -75,6 +81,7 @@ def user_data_endpoint(user):
 @app.route('/all_tasks', methods=['GET'])
 @validate_request
 def all_tasks_endpoint(*args,**kwargs):
+    """Returns a list of all tasks."""
     tasks = logic.get_all_tasks()
     response_list = [
         format_task_for_response(t) for t in tasks
@@ -86,6 +93,7 @@ def all_tasks_endpoint(*args,**kwargs):
 @app.route('/active_tasks', methods=['GET'])
 @validate_request
 def active_tasks_endpoint(*args,**kwargs):
+    """Returns a list of all active tasks."""
     tasks = logic.get_active_tasks()
     response_list = [
         format_task_for_response(t) for t in tasks
@@ -96,6 +104,7 @@ def active_tasks_endpoint(*args,**kwargs):
 @app.route('/tasks_done_by_me', methods=['GET'])
 @validate_request
 def tasks_done_by_me_endpoint(user):
+    """Returns a list of tasks completed by the current user."""
     done_by_me_tasks = logic.get_tasks_done_by_user(user.id)
 
     response_list = [
@@ -107,6 +116,7 @@ def tasks_done_by_me_endpoint(user):
 @app.route('/do_task/<task_id>', methods=['POST'])
 @validate_request
 def do_task(user, task_id: str):
+    """Process that a task has been done by a user."""
     pay_now_str = request.args.get('pay_now')
     pay_now = str_to_bool(pay_now_str)
 
