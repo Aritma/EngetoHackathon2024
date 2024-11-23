@@ -14,7 +14,7 @@ import numpy as np
 task_id = 2
 
 
-columns = 'job_id', 'job_name',\
+columns = 'task_id', 'job_name',\
             'description',\
             'reward_amount',\
             'estimated_duration_minutes',\
@@ -36,7 +36,7 @@ task_database = [
 
 
 
-df = pd.DataFrame(task_database,columns=columns)#.set_index('job_id')
+df = pd.DataFrame(task_database,columns=columns)#.set_index('task_id')
 df
 # fff
 
@@ -53,7 +53,7 @@ class TaskDatabase():
         
         df = self.db
         
-        s = df[df['job_id']==task_id].iloc[0]
+        s = df[df['task_id']==task_id].iloc[0]
         
         s = None if len(s)==0 else s.to_dict()
         
@@ -75,14 +75,14 @@ class TaskDatabase():
         df = self.db
         return [s.to_dict for row_id,s in  df[df['is_done']==False].iterrows()]
     
-    def mark_done(self,task_id: int):
+    def mark_done(self,task_id: int, kid_id: int = 0):
         
         try:
             df = self.db
             
-            # ix = np.where(df['job_id']==task_id)[0]
+            # ix = np.where(df['task_id']==task_id)[0]
             
-            ix = df.index[df['job_id']==task_id]
+            ix = df.index[df['task_id']==task_id]
             
             df.at[ix,'is_done'] = True
             
@@ -92,7 +92,25 @@ class TaskDatabase():
             return 0
     
     
+    def update(self, task: dict):
+        
+        try:
+            df = self.db
+            
+            df = df[~df['task_id']==task['task_id']]
+            
+            df_new = pd.DataFrame(task)
+            
+            self.db = pd.concat([df,df_new])
+            
+            
+            return 1
+        except Exception as exc:
+            print(exc)
+            return 0
     
+        
+        
     
 
 
