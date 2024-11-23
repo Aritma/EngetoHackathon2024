@@ -35,6 +35,9 @@ task_database = [
 
 
 
+len(columns)
+len(task_database[0])
+
 
 
 
@@ -106,10 +109,12 @@ class TaskDatabase():
             1...done
             0...failed
         '''
-
+        
+        print(task['task_id'])
+        
         df = self.db
         print(df)
-        df = df[~df['task_id']==task['task_id']]
+        df = df[~(df['task_id']==task['task_id'])]
         print(df)
         # task['done_at'] = datetime.now()
         
@@ -121,16 +126,30 @@ class TaskDatabase():
         print(self.db)
 
 
-    def waiting_rewards(self,days=4):
+    def waiting_rewards(self,days:int =4):
         
         df = self.db
         df
-        td = datetime.now()-df['done_at']
-        td.days
-        
-        df[(datetime.now()-df['done_at']).days>=4]
-        
 
+        ix = ~df['done_at'].isna()
+        ix
+        df.loc[ix]['done_at']
+        ((pd.Timestamp('now')-df.loc[ix]['done_at']).values.astype(float))/1e9/3600
+        
+        
+        # df = df[]
+        
+        df.loc[ix,'days'] = ((pd.Timestamp('now')-df.loc[ix]['done_at']).values.astype(float))/1e9/3600
+        
+        
+        
+        
+        # (datetime.now()-df['done_at']).to_timedelta()
+        
+        
+        df = df[df['days']>=4]
+        
+        return [s.to_dict() for ii,s in df.iterrows()]
 
 
 
@@ -158,6 +177,7 @@ if __name__=='__main__':
     r = db.get_task(1) 
     r['is_done'] = True
     r['done_by'] = 2
+    r['done_at'] = datetime.now()
     r
     task=r
     
@@ -167,3 +187,4 @@ if __name__=='__main__':
     df = db.db
     print(df)
 
+    print(   db.waiting_rewards()   )
