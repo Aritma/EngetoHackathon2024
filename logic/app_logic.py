@@ -31,7 +31,7 @@ class AppLogic:
         done_by_user_tasks = [task for task in all_tasks if task['done_by'] == user_id]
         return done_by_user_tasks
 
-    def do_task(self, task_id: int, user_id: int):
+    def do_task(self, task_id: int, user_id: int, pay_now: bool):
         user = self.user_storage.get_user_by_id(user_id)
         if user is None:
             raise BadUserException()
@@ -45,6 +45,8 @@ class AppLogic:
             raise AlreadyDoneException()
 
         self.task_db.update(task)
+
+        # TODO: Implement "PAY NOW"
 
         user.balance += task["reward_amount"]
         self.user_storage.update_user(user)

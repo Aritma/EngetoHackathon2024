@@ -1,6 +1,6 @@
 import json
 
-from flask import Flask, request
+from flask import Flask, request, jsonify
 from flask_cors import CORS
 
 
@@ -33,7 +33,7 @@ def user_data_endpoint():
         'balance': user.balance,
         'role': user.role,
     }
-    return json.dumps(response_dict)
+    return jsonify(response_dict)
 
 
 @app.route('/all_tasks', methods=['GET'])
@@ -55,7 +55,7 @@ def all_tasks_endpoint():
         } for t in tasks
     ]
 
-    return json.dumps(response_list)
+    return jsonify(response_list)
 
 
 @app.route('/active_tasks', methods=['GET'])
@@ -76,7 +76,7 @@ def active_tasks_endpoint():
             "done_by": t["done_by"],
         } for t in tasks
     ]
-    return json.dumps(response_list)
+    return jsonify(response_list)
 
 
 @app.route('/tasks_done_by_me', methods=['GET'])
@@ -98,20 +98,26 @@ def tasks_done_by_me_endpoint():
             "done_by": t["done_by"],
         } for t in done_by_me_tasks
     ]
-    return json.dumps(response_list)
+    return jsonify(response_list)
 
 
 @app.route('/do_task/<task_id>', methods=['POST'])
 def do_task(task_id: str):
+    pay_now_str = request.args.get('pay_now')
+    pay_now = bool(pay_now_str)
+
     user_id = int(request.args.get('user_id'))
     user = user_store.get_user_by_id(user_id)
     if user is None:
         return 'Unauthorized', 401
 
     task_id_int = int(task_id)
-    logic.do_task(task_id_int, user_id)
+    logic.do_task(task_id_int, user_id, pay_now=pay_now)
 
-    return 'OK'
+    result = {
+        "status": "OK"
+    }
+    return jsonify(result)
 
 
 if __name__ == '__main__':
