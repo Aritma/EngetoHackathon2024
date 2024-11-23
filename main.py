@@ -1,20 +1,21 @@
-import dataclasses
 import json
 
 from flask import Flask, request
 from flask_cors import CORS
-from datetime import datetime
 
-import task_database
 
-from user_storage import UserData, Role, UserStorage
+from logic.app_logic import AppLogic
+from persistence.user_storage import UserData, Role, UserStorage
+from persistence.task_database import TaskDatabase
 
 
 user_store = UserStorage()
 user_store.add_user(UserData(id=1, name='Alice', balance=100, role=Role.PARENT))
 user_store.add_user(UserData(id=2, name='Bob', balance=200, role=Role.CHILD))
 
-task_db = task_database.TaskDatabase()
+task_db = TaskDatabase()
+
+logic = AppLogic(user_storage=user_store, task_db=task_db)
 
 app = Flask(__name__)
 CORS(app)
@@ -24,9 +25,7 @@ def user_data_endpoint():
     """ Gets all user data of user with given id.
     """
     user_id = int(request.args.get('user_id'))
-    user = user_store.get_user_by_id(user_id)
-    if user is None:
-        return 'Unauthorized', 401
+    user = logic.get_user_data(user_id)
 
     response_dict = {
         'user_id': user.id,
@@ -44,8 +43,7 @@ def all_tasks_endpoint():
     if user is None:
         return 'Unauthorized', 401
 
-    tasks = task_db.get_all_tasks()
-
+    tasks = logic.get_all_tasks()
     response_list = [
         {
             "task_id": t["task_id"],
@@ -56,6 +54,7 @@ def all_tasks_endpoint():
             "done_by": t["done_by"],
         } for t in tasks
     ]
+
     return json.dumps(response_list)
 
 
@@ -66,7 +65,7 @@ def active_tasks_endpoint():
     if user is None:
         return 'Unauthorized', 401
 
-    tasks = task_db.get_active_tasks()
+    tasks = logic.get_active_tasks()
     response_list = [
         {
             "task_id": t["task_id"],
@@ -87,8 +86,7 @@ def tasks_done_by_me_endpoint():
     if user is None:
         return 'Unauthorized', 401
 
-    all_tasks = task_db.get_all_tasks()
-    done_by_me_tasks = [task for task in all_tasks if task['done_by'] == user_id]
+    done_by_me_tasks = logic.get_tasks_done_by_user(user_id)
 
     response_list = [
         {
@@ -111,18 +109,7 @@ def do_task(task_id: str):
         return 'Unauthorized', 401
 
     task_id_int = int(task_id)
-    task = task_db.get_task(task_id_int)
-
-    if task["is_done"]:
-        return 'Task already done', 400
-    
-    task["is_done"] = True
-    task["done_by"] = user_id
-
-    task_db.update(task)
-
-    user.balance += task["reward_amount"]
-    user_store.update_user(user)
+    logic.do_task(task_id_int, user_id)
 
     return 'OK'
 
