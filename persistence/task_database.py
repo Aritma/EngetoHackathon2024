@@ -14,13 +14,7 @@ import sqlite3
 import os
 
 db_file = 'kids_chores.db'
-if os.path.exists(db_file):
-    os.remove(db_file)
 
-'''
-database (pd.DataFrame/SQL databaze) je hardcoded pro demonstraci
-
-'''
 
 
 
@@ -169,49 +163,63 @@ class TaskDatabaseSQL():
     def __init__(self):
         self.db_file = db_file#'kids_chores.db'
         
-        
-        conn = sqlite3.connect(self.db_file)
 
-        '''
-        hardcoded database...
-        '''
-        
-        sql_query = """
-        CREATE TABLE IF NOT EXISTS home_jobs (
-            task_id INTEGER PRIMARY KEY AUTOINCREMENT,
-            job_name TEXT NOT NULL,
-            description TEXT,
-            reward_amount INTEGER NOT NULL,
-            estimated_duration_minutes INTEGER,
-            difficulty_level TEXT CHECK(difficulty_level IN ('Easy', 'Medium', 'Hard')),
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            is_done BOOL DEFAULT FALSE,
-            done_by INTEGER DEFAULT NULL,
-            done_at TIMESTAMP DEFAULT NULL,
-            waiting BOOL DEFAULT NULL
-        );
-        """
-        
-        
-        # Read and execute the SQL file
-        conn.executescript(sql_query)
-        # conn.close()
-        
-        
-        
-        # -- Insert sample jobs
-        sql_query = """INSERT INTO home_jobs (job_name, description, reward_amount, estimated_duration_minutes, difficulty_level)
-        VALUES 
-            ('Washing Dishes', 'Clean all dishes in the sink, load/unload dishwasher, and wipe counters', 35, 20, 'Easy'),
-            ('Mowing Lawn', 'Cut grass in front and back yard, trim edges, and clean up clippings', 10, 45, 'Hard'),
-            ('Making Bed', 'Straighten sheets, arrange pillows, and smooth out comforter', 10, 5, 'Easy'),
-            ('Vacuuming House', 'Vacuum all carpeted areas and rugs in the house', 50, 30, 'Medium'),
-            ('Taking Out Trash', 'Collect trash from all bins, replace bags, and take to outdoor container', 20, 10, 'Easy');
-        """
-        
-        # Read and execute the SQL file
-        conn.executescript(sql_query)
-        conn.close()
+        # if True:
+            # os.remove(self.db_file)
+            
+        if not os.path.exists(self.db_file):
+            
+            conn = sqlite3.connect(self.db_file)
+    
+            '''
+            hardcoded database...
+            '''
+            
+            sql_query = """
+            CREATE TABLE IF NOT EXISTS home_jobs (
+                task_id INTEGER PRIMARY KEY AUTOINCREMENT,
+                job_name TEXT NOT NULL,
+                description TEXT,
+                reward_amount INTEGER NOT NULL,
+                estimated_duration_minutes INTEGER,
+                difficulty_level TEXT CHECK(difficulty_level IN ('Easy', 'Medium', 'Hard')),
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                is_done BOOL DEFAULT FALSE,
+                done_by INTEGER DEFAULT NULL,
+                done_at TIMESTAMP DEFAULT NULL,
+                waiting BOOL DEFAULT NULL
+            );
+            """
+            
+            
+            # Read and execute the SQL file
+            conn.executescript(sql_query)
+            # conn.close()
+            
+            
+            
+            # -- Insert sample jobs
+            sql_query = """INSERT INTO home_jobs (job_name, description, reward_amount, estimated_duration_minutes, difficulty_level)
+            VALUES 
+            """
+            task_samples = [('Washing Dishes', 'Clean all dishes in the sink, load/unload dishwasher, and wipe counters', 35, 20, 'Easy'),
+                            ('Mowing Lawn', 'Cut grass in front and back yard, trim edges, and clean up clippings', 10, 45, 'Hard'),
+                            ('Making Bed', 'Straighten sheets, arrange pillows, and smooth out comforter', 10, 5, 'Easy'),
+                            ('Vacuuming House', 'Vacuum all carpeted areas and rugs in the house', 50, 30, 'Medium'),
+                            ('Taking Out Trash', 'Collect trash from all bins, replace bags, and take to outdoor container', 20, 10, 'Easy'),
+                            ]
+            
+            # sql_query += '\n'
+            for ij in range(3):
+                for task in task_samples:
+                    sql_query += "(" + ', '.join(["'%s'"% (str(s) if k>0 else str(s)+'%d'%ij) for k,s in enumerate(task)]) + "),\n"
+            print(sql_query[-10:])
+            sql_query = sql_query[:-2]+';'
+            print(sql_query[-10:])
+            
+            # Read and execute the SQL file
+            conn.executescript(sql_query)
+            conn.close()
 
     
     def _query_to_dicts(self,query, params=()):
