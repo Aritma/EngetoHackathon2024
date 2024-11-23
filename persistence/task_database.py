@@ -10,11 +10,33 @@ from datetime import datetime
 import pandas as pd
 import numpy as np
 
+import sqlite3
+import os
+
+db_file = 'kids_chores.db'
+if os.path.exists(db_file):
+    os.remove(db_file)
+
+'''
+database (pd.DataFrame/SQL databaze) je hardcoded pro demonstraci
+
+'''
 
 
 
+class TaskDatabase():
+    
+    def __init__(self):
 
-columns = 'task_id', 'job_name',\
+
+
+        '''
+        hardcoded database...
+        '''
+    
+    
+
+        self.columns = 'task_id', 'job_name',\
             'description',\
             'reward_amount',\
             'estimated_duration_minutes',\
@@ -24,37 +46,24 @@ columns = 'task_id', 'job_name',\
              'done_at',\
              'waiting'
 
-task_database = [
-    (0,'Washing Dishes', 'Clean all dishes in the sink, load/unload dishwasher, and wipe counters', 35, 20, 'Easy',datetime.now(),False,None,None,None),
-    (1,'Mowing Lawn', 'Cut grass in front and back yard, trim edges, and clean up clippings', 10, 45, 'Hard',datetime.now(),False,None,None,None),
-    (2,'Making Bed', 'Straighten sheets, arrange pillows, and smooth out comforter', 10, 5, 'Easy',datetime.now(),False,None,None,None),
-    (3,'Vacuuming House', 'Vacuum all carpeted areas and rugs in the house', 50, 30, 'Medium',datetime.now(),False,None,None,None),
-    (4,'Taking Out Trash', 'Collect trash from all bins, replace bags, and take to outdoor container', 20, 10, 'Easy',datetime.now(),False,None,None,None)
-]
-
-
-
-
-len(columns)
-len(task_database[0])
-
-
-
-
-df = pd.DataFrame(task_database,columns=columns)#.set_index('task_id')
-df
-
-
-df['created_at'] = [s.to_pydatetime() for s in df['created_at']]
-
-
-
-class TaskDatabase():
-    
-    def __init__(self):
+        task_database = [
+            (0,'Washing Dishes', 'Clean all dishes in the sink, load/unload dishwasher, and wipe counters', 35, 20, 'Easy',datetime.now(),False,None,None,None),
+            (1,'Mowing Lawn', 'Cut grass in front and back yard, trim edges, and clean up clippings', 10, 45, 'Hard',datetime.now(),False,None,None,None),
+            (2,'Making Bed', 'Straighten sheets, arrange pillows, and smooth out comforter', 10, 5, 'Easy',datetime.now(),False,None,None,None),
+            (3,'Vacuuming House', 'Vacuum all carpeted areas and rugs in the house', 50, 30, 'Medium',datetime.now(),False,None,None,None),
+            (4,'Taking Out Trash', 'Collect trash from all bins, replace bags, and take to outdoor container', 20, 10, 'Easy',datetime.now(),False,None,None,None)
+        ]
+        
+        
+        len(self.columns)
+        len(task_database[0])
+        
+        df = pd.DataFrame(task_database,columns=self.columns)#.set_index('task_id')
+        df
+        df['created_at'] = [s.to_pydatetime() for s in df['created_at']]
+        
         self.db = df
-        pass
-
+    
     
     
     def get_task(self,task_id : int) -> dict:
@@ -110,23 +119,23 @@ class TaskDatabase():
             0...failed
         '''
         
-        print(task['task_id'])
+        # print(task['task_id'])
         
         df = self.db
-        print(df)
+        # print(df)
         df = df[~(df['task_id']==task['task_id'])]
-        print(df)
+        # print(df)
         # task['done_at'] = datetime.now()
         
         
-        df_new = pd.DataFrame([task],columns=columns)
+        df_new = pd.DataFrame([task],columns=self.columns)
         
         self.db = pd.concat([df,df_new])
 
-        print(self.db)
+        # print(self.db)
 
 
-    def waiting_rewards(self,days:int =4):
+    def waiting_rewards(self,done_by: int, days:int =4):
         
         df = self.db
         df
@@ -147,18 +156,201 @@ class TaskDatabase():
         # (datetime.now()-df['done_at']).to_timedelta()
         
         
-        df = df[df['days']>=days]
+        df = df[  (df['done_by']==done_by)  &  (df['days']>=days)  &  (df['waiting']==True)   ]
         
         return [s.to_dict() for ii,s in df.iterrows()]
 
+#%%
 
 
 
+class TaskDatabaseSQL():
+    
+    def __init__(self):
+        self.db_file = db_file#'kids_chores.db'
+        
+        
+        conn = sqlite3.connect(self.db_file)
+
+        '''
+        hardcoded database...
+        '''
+        
+        sql_query = """
+        CREATE TABLE IF NOT EXISTS home_jobs (
+            task_id INTEGER PRIMARY KEY AUTOINCREMENT,
+            job_name TEXT NOT NULL,
+            description TEXT,
+            reward_amount INTEGER NOT NULL,
+            estimated_duration_minutes INTEGER,
+            difficulty_level TEXT CHECK(difficulty_level IN ('Easy', 'Medium', 'Hard')),
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            is_done BOOL DEFAULT FALSE,
+            done_by INTEGER DEFAULT NULL,
+            done_at TIMESTAMP DEFAULT NULL,
+            waiting BOOL DEFAULT NULL
+        );
+        """
+        
+        
+        # Read and execute the SQL file
+        conn.executescript(sql_query)
+        # conn.close()
+        
+        
+        
+        # -- Insert sample jobs
+        sql_query = """INSERT INTO home_jobs (job_name, description, reward_amount, estimated_duration_minutes, difficulty_level)
+        VALUES 
+            ('Washing Dishes', 'Clean all dishes in the sink, load/unload dishwasher, and wipe counters', 35, 20, 'Easy'),
+            ('Mowing Lawn', 'Cut grass in front and back yard, trim edges, and clean up clippings', 10, 45, 'Hard'),
+            ('Making Bed', 'Straighten sheets, arrange pillows, and smooth out comforter', 10, 5, 'Easy'),
+            ('Vacuuming House', 'Vacuum all carpeted areas and rugs in the house', 50, 30, 'Medium'),
+            ('Taking Out Trash', 'Collect trash from all bins, replace bags, and take to outdoor container', 20, 10, 'Easy');
+        """
+        
+        # Read and execute the SQL file
+        conn.executescript(sql_query)
+        conn.close()
+
+    
+    def _query_to_dicts(self,query, params=()):
+        conn = sqlite3.connect(self.db_file)
+        conn.row_factory = sqlite3.Row  # This allows dict-like access to rows
+        cursor = conn.cursor()
+
+        cursor.execute(query, params)
+        # Convert results to list of dicts
+        result = [dict(row) for row in cursor.fetchall()]
+        return result
+
+        conn.close()
+
+
+    def get_all_tasks(self) -> list:
+
+        resp = self._query_to_dicts('SELECT * FROM home_jobs')
+        print("\nAll jobs:")
+        for job in resp:
+            print('%2d: %s' % (job['task_id'],job['job_name']))
+
+        return resp
+    
+    def get_active_tasks(self) -> dict:
+        resp = self._query_to_dicts('SELECT * FROM home_jobs WHERE is_done = FALSE')
+        
+        print("\nActive jobs:")
+        for job in resp:
+            print('%2d: %s' % (job['task_id'],job['job_name']))
+
+        return resp
+
+
+    def get_task(self, task_id: int) -> dict:
+
+        resp = self._query_to_dicts('SELECT * FROM home_jobs WHERE task_id = ?', (task_id,))
+
+
+        return resp[0]
+
+
+    def _delete_job_by_id(self,task_id: int):
+        conn = sqlite3.connect(self.db_file)
+        conn.row_factory = sqlite3.Row  # This allows us to access columns by name
+        cursor = conn.cursor()
+        
+
+        # Get job details
+        cursor.execute('SELECT * FROM home_jobs WHERE task_id = ?', (task_id,))
+        job = cursor.fetchone()
+        
+        
+        
+        if job:
+        
+            cursor.execute('DELETE FROM home_jobs WHERE task_id = ?', (task_id,))
+            conn.commit()
+            print(f"Successfully deleted job: {job['job_name']}")
+            
+        else:
+            print(f"No job found with ID {task_id}")
+            return False
+                
+        conn.close()
+
+
+
+    
+    def update(self,task_dict: dict):
+        task_id = task_dict.get('task_id')
+        # print(task_id)
+        
+        # task_id=1
+        self._delete_job_by_id(task_id)
+        
+
+        conn = sqlite3.connect(self.db_file)
+        cursor = conn.cursor()
+        
+        # Prepare the INSERT statement
+        query = '''
+            INSERT INTO home_jobs 
+            (job_name, description, reward_amount, estimated_duration_minutes, difficulty_level,is_done,done_by,done_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        '''
+        
+        # Get values from dictionary
+        values = (
+            task_dict.get('job_name'),
+            task_dict.get('description'),
+            task_dict.get('reward_amount'),
+            task_dict.get('estimated_duration_minutes'),
+            task_dict.get('difficulty_level'),
+            task_dict.get('is_done'),
+            task_dict.get('done_by'),
+            task_dict.get('done_at'),
+            
+        )
+        
+    
+        cursor.execute(query, values)
+        conn.commit()
+        # print(f"Successfully added job: {job_dict['job_name']}")
+        
+        conn.close()
+        
+        # Return the id of the newly inserted row
+        return cursor.lastrowid
+
+
+
+    def waiting_rewards(self,done_by: int , days: int = 4):
+
+        resp = self._query_to_dicts('SELECT * FROM home_jobs WHERE waiting = ?', (True,))
+
+        # resp = self._query_to_dicts('SELECT * FROM home_jobs')
+        # r=resp[-1]
+        # r
+        # done_by=2
+        # td = (datetime.now() - datetime.strptime(r['done_at'],'%Y-%m-%d %H:%M:%S.%f'))
+        # datetime.strptime('%Y-%m-%d %H:%M:%S.%f',r['done_at'])
+
+
+        # (datetime.now() - r['done_at'])
+        resp = [r for r in resp if (r['done_by']==done_by) and ((datetime.now() - r['done_at']).days>=days)]
+
+        return resp
+
+
+
+
+
+#%%
 
 
 
 if __name__=='__main__':
-    
+    print('='*80)
     db = TaskDatabase()
     self=db
     
@@ -173,11 +365,17 @@ if __name__=='__main__':
     df=self.db
     df
 
+    task_ids = [r['task_id'] for r in db.get_all_tasks() ]
+    task_id = task_ids[0]
 
-    r = db.get_task(1) 
+    print('-'*40)
+    r = db.get_task(task_id) 
+
+    r = db.get_task(task_id) 
     r['is_done'] = True
     r['done_by'] = 2
     r['done_at'] = datetime.now()
+    r['waiting'] = True
     r
     task=r
     
@@ -187,4 +385,41 @@ if __name__=='__main__':
     df = db.db
     print(df)
 
-    print(   db.waiting_rewards()   )
+    print('-'*40)
+    print(   db.waiting_rewards(2)   )
+
+
+
+
+#%%============================================================================
+
+if __name__=='__main__':
+    print('='*80)
+    db = TaskDatabaseSQL()
+    self=db
+    
+    # print(   db.get_all_tasks()   )
+    
+    # print(   db.get_active_tasks()   )
+
+    # print(   db.get_task(1)   )
+
+
+    task_ids = [r['task_id'] for r in db.get_all_tasks() ]
+    task_id = task_ids[0]
+
+    print('-'*40)
+    r = db.get_task(task_id) 
+    r['is_done'] = True
+    r['done_by'] = 2
+    r['done_at'] = datetime.now()
+    task_dict=r
+    
+    db.update(r)
+
+    print('-'*40)
+    print(   db.waiting_rewards(2)   )
+
+
+    # df = db.db
+    # print(df)
