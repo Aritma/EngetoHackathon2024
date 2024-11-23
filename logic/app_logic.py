@@ -44,6 +44,9 @@ class AppLogic:
         if task["is_done"]:
             raise AlreadyDoneException()
 
+        task["is_done"] = True
+        task["done_by"] = user_id
+
         self.task_db.update(task)
 
         # TODO: Implement "PAY NOW"
