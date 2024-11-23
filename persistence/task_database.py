@@ -241,7 +241,7 @@ class TaskDatabaseSQL():
         for row in cursor.fetchall():
             d = dict(row)
             
-            for d0 in d.keys():
+            for d0 in ['created_at','done_at']: #d.keys():
                 d
                 if re.match('^\d{4}-\d{2}-\d{2}\s+\d{2}[:]\d{2}[:]\d{2}\.\d{6}$',str(d[d0])):
                     d0
@@ -319,6 +319,45 @@ class TaskDatabaseSQL():
     def update(self,task_dict: dict):
         task_id = task_dict.get('task_id')
         # print(task_id)
+        
+        
+        keys = ['is_done','done_at','done_by','waiting']
+        
+        # set_values = ', '.join([f"{key} = ?" for key in task_dict.keys()])
+        set_values = ', '.join([f"{key} = ?" for key in keys])
+        
+        
+        
+        query = f'UPDATE home_jobs SET {set_values} WHERE task_id = ?'
+        
+        # Add job_id to the end of values tuple
+        values = tuple([task_dict[k] for k in keys] + [task_id,])
+        
+        
+        # print(query)
+        # print(values)
+        
+        conn = sqlite3.connect(self.db_file)
+        cursor = conn.cursor()
+        
+        cursor.execute(query, values)
+        conn.commit()
+        
+        if cursor.rowcount > 0:
+            print(f"Successfully updated job {task_id}")
+            return True
+        else:
+            print(f"No job found with ID {task_id}")
+            return False
+        
+        
+        
+        
+        
+        
+        
+        
+        
         
         # task_id=1
         self._delete_job_by_id(task_id)
