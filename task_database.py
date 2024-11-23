@@ -24,11 +24,11 @@ columns = 'task_id', 'job_name',\
              'done_at'
 
 task_database = [
-    (0,'Washing Dishes', 'Clean all dishes in the sink, load/unload dishwasher, and wipe counters', 3.50, 20, 'Easy',datetime.now(),False,None,None),
-    (1,'Mowing Lawn', 'Cut grass in front and back yard, trim edges, and clean up clippings', 10.00, 45, 'Hard',datetime.now(),False,None,None),
-    (2,'Making Bed', 'Straighten sheets, arrange pillows, and smooth out comforter', 1.00, 5, 'Easy',datetime.now(),False,None,None),
-    (3,'Vacuuming House', 'Vacuum all carpeted areas and rugs in the house', 5.00, 30, 'Medium',datetime.now(),False,None,None),
-    (4,'Taking Out Trash', 'Collect trash from all bins, replace bags, and take to outdoor container', 2.00, 10, 'Easy',datetime.now(),False,None,None)
+    (0,'Washing Dishes', 'Clean all dishes in the sink, load/unload dishwasher, and wipe counters', 35, 20, 'Easy',datetime.now(),False,None,None),
+    (1,'Mowing Lawn', 'Cut grass in front and back yard, trim edges, and clean up clippings', 10, 45, 'Hard',datetime.now(),False,None,None),
+    (2,'Making Bed', 'Straighten sheets, arrange pillows, and smooth out comforter', 10, 5, 'Easy',datetime.now(),False,None,None),
+    (3,'Vacuuming House', 'Vacuum all carpeted areas and rugs in the house', 50, 30, 'Medium',datetime.now(),False,None,None),
+    (4,'Taking Out Trash', 'Collect trash from all bins, replace bags, and take to outdoor container', 20, 10, 'Easy',datetime.now(),False,None,None)
 ]
 
 
