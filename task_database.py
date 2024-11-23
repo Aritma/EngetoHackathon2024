@@ -49,8 +49,9 @@ class TaskDatabase():
 
     
     
-    def get_task(self,task_id : int):
-        
+    def get_task(self,task_id : int) -> dict:
+        '''vraci radek databaze domacich praci jako dict
+        '''
         df = self.db
         
         s = df[df['task_id']==task_id].iloc[0]
@@ -66,17 +67,26 @@ class TaskDatabase():
         return s
     
     
-    def get_all_tasks(self):
+    def get_all_tasks(self) -> list:
+        '''vraci vsechny radky (databaze domacich praci)
+            jako list of dicts
+        '''
         df = self.db
         return [s.to_dict for row_id,s in  df.iterrows()]
     
     
-    def get_active_tasks(self):
+    def get_active_tasks(self) -> list:
+        '''vraci vsechny AKTIVNI radky (databaze domacich praci)
+            jako list of dicts
+        '''
         df = self.db
         return [s.to_dict for row_id,s in  df[df['is_done']==False].iterrows()]
     
-    def mark_done(self,task_id: int, kid_id: int = 0):
-        
+    def mark_done(self,task_id: int, kid_id: int = 0) -> int:
+        '''oznaci task (podle task_id) jako done
+            1...done
+            0...failed
+        '''
         try:
             df = self.db
             
@@ -93,7 +103,12 @@ class TaskDatabase():
     
     
     def update(self, task: dict):
-        
+        '''update databaze
+            vstup: task (dict)
+            najde dany radek - vymaze ho - a appenduje vstup
+            1...done
+            0...failed
+        '''
         try:
             df = self.db
             
