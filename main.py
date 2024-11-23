@@ -31,7 +31,7 @@ def user_data_endpoint():
         'user_id': user.id,
         'name': user.name,
         'balance': user.balance,
-        'role': user
+        'role': user.role,
     }
     return json.dumps(response_dict)
 
