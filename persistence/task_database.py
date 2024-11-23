@@ -213,11 +213,12 @@ class TaskDatabaseSQL():
             for ij in range(3):
                 for task in task_samples:
                     sql_query += "(" + ', '.join(["'%s'"% (str(s) if k>0 else str(s)+'%d'%ij) for k,s in enumerate(task)]) + "),\n"
-            print(sql_query[-10:])
-            sql_query = sql_query[:-2]+';'
-            print(sql_query[-10:])
             
-            # Read and execute the SQL file
+            # print(sql_query[-10:])
+            sql_query = sql_query[:-2]+';'
+            # print(sql_query[-10:])
+            
+ 
             conn.executescript(sql_query)
             conn.close()
 
@@ -228,8 +229,8 @@ class TaskDatabaseSQL():
         cursor = conn.cursor()
 
 
-        query = 'SELECT * FROM home_jobs'
-        params=[]
+        # query = 'SELECT * FROM home_jobs'
+        # params=[]
         cursor.execute(query, params)
         
         
@@ -282,9 +283,9 @@ class TaskDatabaseSQL():
 
 
     def get_task(self, task_id: int) -> dict:
-
+        # print(task_id)
         resp = self._query_to_dicts('SELECT * FROM home_jobs WHERE task_id = ?', (task_id,))
-
+        # print(f'len(resp)={len(resp)}')
 
         return resp[0]
 
@@ -436,6 +437,10 @@ if __name__=='__main__':
 
 if __name__=='__main__':
     print('='*80)
+    
+    os.remove(db_file)
+    
+    
     db = TaskDatabaseSQL()
     self=db
     
@@ -452,17 +457,30 @@ if __name__=='__main__':
 
     # print(   db.get_task(1)   )
 
+
+
     print('-'*40)
     task_ids = [r['task_id'] for r in db.get_all_tasks() ]
-    task_id = task_ids[0]
+    task_id = task_ids[1]
     print(task_id)
 
+    print('-'*40)
+    
+    
     
     r = db.get_task(task_id) 
+    
+    print( {k:r[k] for k in ['task_id']})
+    
+    
     r['is_done'] = True
     r['done_by'] = 2
     r['done_at'] = datetime.now()
     task_dict=r
+    
+    
+    
+    
     
     db.update(r)
 
