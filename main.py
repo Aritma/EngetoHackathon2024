@@ -2,6 +2,7 @@ import dataclasses
 import json
 
 from flask import Flask, request
+from flask_cors import CORS
 from datetime import datetime
 
 import task_database
@@ -16,7 +17,7 @@ user_store.add_user(UserData(id=2, name='Bob', balance=200, role=Role.CHILD))
 task_db = task_database.TaskDatabase()
 
 app = Flask(__name__)
-
+CORS(app)
 
 @app.route('/my_data', methods=['GET'])
 def user_data_endpoint():
@@ -31,7 +32,7 @@ def user_data_endpoint():
         'user_id': user.id,
         'name': user.name,
         'balance': user.balance,
-        'role': user
+        'role': user.role,
     }
     return json.dumps(response_dict)
 
