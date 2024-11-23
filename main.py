@@ -1,59 +1,74 @@
-import json
+"""Main application entrypoint."""
 
-from enum import Enum
+import functools
 
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 
-from logic.app_logic import AppLogic
+from logic.app_logic import AppLogic, Task
 from persistence.user_storage import UserData, Role, UserStorage
-from persistence.task_database import TaskDatabase
+from persistence.task_database_sql import TaskDatabaseSQL
 
+
+def validate_request(f):
+  """Middleware for authenticating requests.
+  
+  This injects the user object as the first argument of the decorated handler.
+  """  
+  @functools.wraps(f)
+  def decorated_function(*args, **kwargs):
+    user_id = request.args.get('user_id', type=int)
+    if user_id is None:
+        return 'Bad Request - Missing params', 400
+
+    user = user_store.get_user_by_id(user_id)
+    if user is None:
+        return 'Unauthorized', 401
+    return f(user, *args, **kwargs)
+  return decorated_function
+
+
+# Wiring up with dependency extension
 
 user_store = UserStorage()
 user_store.add_user(UserData(id=1, name='Alice', balance=100, role=Role.PARENT))
 user_store.add_user(UserData(id=2, name='Bob', balance=200, role=Role.CHILD))
 
-task_db = TaskDatabase()
+task_db = TaskDatabaseSQL()
 
 logic = AppLogic(user_storage=user_store, task_db=task_db)
 
-class TaskStatus(str, Enum):
-    ACTIVE = "active"
-    PAID = "paid"
-    WAITING = "waiting"
 
 app = Flask(__name__)
 CORS(app)
 
 
-def format_task_for_response(task: dict) -> dict:
+# Presentation helpers
+
+def format_task_for_response(task: Task) -> dict:
+    """Formats a task in the format suitable for JSON response."""
     return {
-        "task_id": task["task_id"],
-        "task_name": task["job_name"],
-        "reward_amount": task["reward_amount"],
-        "created_at": task["created_at"].isoformat(),
-        "is_done": task["is_done"],
-        "done_by": task["done_by"],
-        "status": (
-            TaskStatus.ACTIVE.value if not task["is_done"]
-            else TaskStatus.WAITING if task["waiting"]
-            else TaskStatus.PAID.value
-        )
+        "task_id": task.id,
+        "task_name": task.task_name,
+        "reward_amount": task.reward_amount,
+        "created_at": task.created_at.isoformat(),
+        "is_done": task.is_done,
+        "done_by": task.done_by,
+        "status": task.status(),
     }
 
 
 def str_to_bool(s: str) -> bool:
+    """Parses a boolean value from string."""
     return s.lower() == "true"
 
 
-@app.route('/my_data', methods=['GET'])
-def user_data_endpoint():
-    """ Gets all user data of user with given id.
-    """
-    user_id = int(request.args.get('user_id'))
-    user = logic.get_user_data(user_id)
+# Route handlers
 
+@app.route('/my_data', methods=['GET'])
+@validate_request
+def user_data_endpoint(user):
+    """Gets all user data of user with given id."""
     response_dict = {
         'user_id': user.id,
         'name': user.name,
@@ -64,12 +79,9 @@ def user_data_endpoint():
 
 
 @app.route('/all_tasks', methods=['GET'])
-def all_tasks_endpoint():
-    user_id = int(request.args.get('user_id'))
-    user = user_store.get_user_by_id(user_id)
-    if user is None:
-        return 'Unauthorized', 401
-
+@validate_request
+def all_tasks_endpoint(*args,**kwargs):
+    """Returns a list of all tasks."""
     tasks = logic.get_all_tasks()
     response_list = [
         format_task_for_response(t) for t in tasks
@@ -79,12 +91,9 @@ def all_tasks_endpoint():
 
 
 @app.route('/active_tasks', methods=['GET'])
-def active_tasks_endpoint():
-    user_id = int(request.args.get('user_id'))
-    user = user_store.get_user_by_id(user_id)
-    if user is None:
-        return 'Unauthorized', 401
-
+@validate_request
+def active_tasks_endpoint(*args,**kwargs):
+    """Returns a list of all active tasks."""
     tasks = logic.get_active_tasks()
     response_list = [
         format_task_for_response(t) for t in tasks
@@ -93,13 +102,10 @@ def active_tasks_endpoint():
 
 
 @app.route('/tasks_done_by_me', methods=['GET'])
-def tasks_done_by_me_endpoint():
-    user_id = int(request.args.get('user_id'))
-    user = user_store.get_user_by_id(user_id)
-    if user is None:
-        return 'Unauthorized', 401
-
-    done_by_me_tasks = logic.get_tasks_done_by_user(user_id)
+@validate_request
+def tasks_done_by_me_endpoint(user):
+    """Returns a list of tasks completed by the current user."""
+    done_by_me_tasks = logic.get_tasks_done_by_user(user.id)
 
     response_list = [
         format_task_for_response(t) for t in done_by_me_tasks
@@ -108,17 +114,14 @@ def tasks_done_by_me_endpoint():
 
 
 @app.route('/do_task/<task_id>', methods=['POST'])
-def do_task(task_id: str):
+@validate_request
+def do_task(user, task_id: str):
+    """Process that a task has been done by a user."""
     pay_now_str = request.args.get('pay_now')
     pay_now = str_to_bool(pay_now_str)
 
-    user_id = int(request.args.get('user_id'))
-    user = user_store.get_user_by_id(user_id)
-    if user is None:
-        return 'Unauthorized', 401
-
     task_id_int = int(task_id)
-    logic.do_task(task_id_int, user_id, pay_now=pay_now)
+    logic.do_task(task_id_int, user.id, pay_now=pay_now)
 
     result = {
         "status": "OK"
