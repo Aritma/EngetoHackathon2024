@@ -344,7 +344,13 @@ class TaskDatabaseSQL():
         conn.commit()
         
         if cursor.rowcount > 0:
+            
+            print({k:task_dict[k] for k in (['task_id',]+keys)})
+            
             print(f"Successfully updated job {task_id}")
+            
+            
+            
             return True
         else:
             print(f"No job found with ID {task_id}")
