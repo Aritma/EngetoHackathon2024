@@ -7,21 +7,17 @@ from flask_cors import CORS
 
 from logic.app_logic import AppLogic
 from persistence.user_storage import UserData, Role, UserStorage
-from persistence.task_database import TaskDatabase
+from persistence.task_database import TaskDatabaseSQL
 
 
 user_store = UserStorage()
 user_store.add_user(UserData(id=1, name='Alice', balance=100, role=Role.PARENT))
 user_store.add_user(UserData(id=2, name='Bob', balance=200, role=Role.CHILD))
 
-task_db = TaskDatabase()
+task_db = TaskDatabaseSQL()
 
 logic = AppLogic(user_storage=user_store, task_db=task_db)
 
-class TaskStatus(str, Enum):
-    ACTIVE = "active"
-    PAID = "paid"
-    WAITING = "waiting"
 
 app = Flask(__name__)
 CORS(app)
@@ -29,17 +25,13 @@ CORS(app)
 
 def format_task_for_response(task: dict) -> dict:
     return {
-        "task_id": task["task_id"],
-        "task_name": task["job_name"],
-        "reward_amount": task["reward_amount"],
-        "created_at": task["created_at"].isoformat(),
-        "is_done": task["is_done"],
-        "done_by": task["done_by"],
-        "status": (
-            TaskStatus.ACTIVE.value if not task["is_done"]
-            else TaskStatus.WAITING if task["waiting"]
-            else TaskStatus.PAID.value
-        )
+        "task_id": task.id,
+        "task_name": task.task_name,
+        "reward_amount": task.reward_amount,
+        "created_at": task.created_at.isoformat(),
+        "is_done": task.is_done,
+        "done_by": task.done_by,
+        "status": task.status(),
     }
 
 

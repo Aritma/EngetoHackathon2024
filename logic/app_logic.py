@@ -1,3 +1,7 @@
+from dataclasses import dataclass
+from datetime import datetime
+from enum import Enum
+
 from persistence.user_storage import UserStorage
 from persistence.task_database import TaskDatabase
 
@@ -6,6 +10,47 @@ class BadUserException(Exception):
 
 class AlreadyDoneException(Exception):
     pass
+
+class TaskStatus(str, Enum):
+    ACTIVE = "active"
+    PAID = "paid"
+    WAITING = "waiting"
+
+@dataclass
+class Task:
+    id: int
+    task_name: str
+    description: str 
+    reward_amount: int
+    difficulty_level: str
+    created_at: datetime 
+    is_done: bool
+    done_by: int
+    done_at: datetime
+    waiting: bool
+
+    @classmethod
+    def load_from_dict(cls, data: dict):
+        return cls(
+            id=data["task_id"],
+            task_name=data["job_name"],
+            description=data["description"],
+            reward_amount=data["reward_amount"],
+            difficulty_level=data["difficulty_level"],
+            created_at=data["created_at"],
+            is_done=data["is_done"],
+            done_by=data["done_by"],
+            done_at=data["done_at"],
+            waiting=data["waiting"]
+        )
+
+    def status(self) -> TaskStatus:
+        if not self.is_done:
+            return TaskStatus.ACTIVE
+        if self.waiting:
+            return TaskStatus.WAITING
+        else:
+            return TaskStatus.PAID
 
 
 class AppLogic:
@@ -21,14 +66,14 @@ class AppLogic:
         return user
 
     def get_all_tasks(self):
-        return self.task_db.get_all_tasks()
+        return [Task.load_from_dict(t) for t in self.task_db.get_all_tasks()]
     
     def get_active_tasks(self):
-        return self.task_db.get_active_tasks()
+        return [Task.load_from_dict(t) for t in self.task_db.get_active_tasks()]
     
     def get_tasks_done_by_user(self, user_id: int):
-        all_tasks = self.task_db.get_all_tasks()
-        done_by_user_tasks = [task for task in all_tasks if task['done_by'] == user_id]
+        all_tasks = [Task.load_from_dict(t) for t in self.task_db.get_all_tasks()]
+        done_by_user_tasks = [task for task in all_tasks if task.done_by == user_id]
         return done_by_user_tasks
 
     def do_task(self, task_id: int, user_id: int, pay_now: bool):
@@ -52,5 +97,3 @@ class AppLogic:
         if pay_now:
             user.balance += task["reward_amount"]
         self.user_storage.update_user(user)
-
-        
