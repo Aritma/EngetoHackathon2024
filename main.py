@@ -1,39 +1,9 @@
-import copy
 import json
-from dataclasses import dataclass
-from enum import Enum
-from typing import Optional
 
 from flask import Flask, request
 
 import task_database
-
-class Role(str, Enum):
-    PARENT = "parent"
-    CHILD = "child"
-
-@dataclass
-class UserData:
-    id: int
-    name: str
-    balance: int
-    role: Role
-
-class UserStorage:
-    def __init__(self):
-        self.db = {}
-
-    def get_user_by_id(self, user_id: int) -> Optional[UserData]:
-        user = self.db.get(user_id)
-        if user is None:
-            return None
-        return copy.copy(user)
-
-    def update_user(self, user: UserData) -> None:
-        self.db[user.id] = user
-
-    def add_user(self, user: UserData) -> None:
-        self.db[user.id] = user
+import user_storage
 
 
 user_store = UserStorage()
@@ -56,7 +26,19 @@ def user_data_endpoint(id: str):
     return json.dumps(user)
 
 
-@app.route('/tasks', methods=['GET'])
+@app.route('/all_tasks', methods=['GET'])
+def task_list():
+    req = json.loads(request.data)
+    user_id = req['user_id']
+    user = user_store.get_user_by_id(user_id)
+    if user is None:
+        return 'Unauthorized', 401
+
+    tasks = task_database.all_tasks()
+    return json.dumps(tasks)
+
+
+@app.route('/all_tasks', methods=['GET'])
 def task_list():
     req = json.loads(request.data)
     user_id = req['user_id']
