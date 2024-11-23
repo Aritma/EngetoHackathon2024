@@ -18,7 +18,7 @@ task_db = TaskDatabase()
 
 logic = AppLogic(user_storage=user_store, task_db=task_db)
 
-class TaskStatus(Enum):
+class TaskStatus(str, Enum):
     ACTIVE = "active"
     PAID = "paid"
     WAITING = "waiting"
@@ -35,8 +35,11 @@ def format_task_for_response(task: dict) -> dict:
         "created_at": task["created_at"].isoformat(),
         "is_done": task["is_done"],
         "done_by": task["done_by"],
-        # TODO: Real status
-        "status": TaskStatus.ACTIVE.value if not task["is_done"] else TaskStatus.PAID.value
+        "status": (
+            TaskStatus.ACTIVE.value if not task["is_done"]
+            else TaskStatus.WAITING if task["waiting"]
+            else TaskStatus.PAID.value
+        )
     }
 
 
