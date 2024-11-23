@@ -1,8 +1,9 @@
 import json
 
+from enum import Enum
+
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-
 
 from logic.app_logic import AppLogic
 from persistence.user_storage import UserData, Role, UserStorage
@@ -17,8 +18,26 @@ task_db = TaskDatabase()
 
 logic = AppLogic(user_storage=user_store, task_db=task_db)
 
+class TaskStatus(Enum):
+    ACTIVE = "active"
+    PAID = "paid"
+    WAITING = "waiting"
+
 app = Flask(__name__)
 CORS(app)
+
+
+def format_task_for_response(task: dict) -> dict:
+    return {
+        "task_id": task["task_id"],
+        "task_name": task["job_name"],
+        "reward_amount": task["reward_amount"],
+        "created_at": task["created_at"].isoformat(),
+        "is_done": task["is_done"],
+        "done_by": task["done_by"],
+        # TODO: Real status
+        "status": TaskStatus.ACTIVE.value if not task["is_done"] else TaskStatus.PAID.value
+    }
 
 @app.route('/my_data', methods=['GET'])
 def user_data_endpoint():
@@ -45,14 +64,7 @@ def all_tasks_endpoint():
 
     tasks = logic.get_all_tasks()
     response_list = [
-        {
-            "task_id": t["task_id"],
-            "task_name": t["job_name"],
-            "reward_amount": t["reward_amount"],
-            "created_at": t["created_at"].isoformat(),
-            "is_done": t["is_done"],
-            "done_by": t["done_by"],
-        } for t in tasks
+        format_task_for_response(t) for t in tasks
     ]
 
     return jsonify(response_list)
@@ -67,14 +79,7 @@ def active_tasks_endpoint():
 
     tasks = logic.get_active_tasks()
     response_list = [
-        {
-            "task_id": t["task_id"],
-            "task_name": t["job_name"],
-            "reward_amount": t["reward_amount"],
-            "created_at": t["created_at"].isoformat(),
-            "is_done": t["is_done"],
-            "done_by": t["done_by"],
-        } for t in tasks
+        format_task_for_response(t) for t in tasks
     ]
     return jsonify(response_list)
 
@@ -89,14 +94,7 @@ def tasks_done_by_me_endpoint():
     done_by_me_tasks = logic.get_tasks_done_by_user(user_id)
 
     response_list = [
-        {
-            "task_id": t["task_id"],
-            "task_name": t["job_name"],
-            "reward_amount": t["reward_amount"],
-            "created_at": t["created_at"].isoformat(),
-            "is_done": t["is_done"],
-            "done_by": t["done_by"],
-        } for t in done_by_me_tasks
+        format_task_for_response(t) for t in done_by_me_tasks
     ]
     return jsonify(response_list)
 
