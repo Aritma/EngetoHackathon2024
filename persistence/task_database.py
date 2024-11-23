@@ -12,7 +12,7 @@ import numpy as np
 
 import sqlite3
 import os
-
+import re
 db_file = 'kids_chores.db'
 
 
@@ -227,9 +227,36 @@ class TaskDatabaseSQL():
         conn.row_factory = sqlite3.Row  # This allows dict-like access to rows
         cursor = conn.cursor()
 
+
+        query = 'SELECT * FROM home_jobs'
+        params=[]
         cursor.execute(query, params)
+        
+        
+        # sqlite3 
+        # SQLite does not have a native TIMESTAMP data type. Instead, it stores TIMESTAMP values as TEXT, INTEGER, or REAL, 
+        # --> 
+        result=[]
         # Convert results to list of dicts
-        result = [dict(row) for row in cursor.fetchall()]
+        for row in cursor.fetchall():
+            d = dict(row)
+            
+            for d0 in d.keys():
+                d
+                if re.match('^\d{4}-\d{2}-\d{2}\s+\d{2}[:]\d{2}[:]\d{2}\.\d{6}$',str(d[d0])):
+                    d0
+                    d[d0] = datetime.strptime(d[d0],'%Y-%m-%d %H:%M:%S.%f')
+                elif re.match('^\d{4}-\d{2}-\d{2}\s+\d{2}[:]\d{2}[:]\d{2}$',str(d[d0])):
+                    d0
+                    d[d0] = datetime.strptime(d[d0],'%Y-%m-%d %H:%M:%S')
+                    
+            d
+                    
+            result.append(d)
+        
+        
+        
+        # result = [dict(row) for row in cursor.fetchall()]
         return result
 
         conn.close()
@@ -238,18 +265,18 @@ class TaskDatabaseSQL():
     def get_all_tasks(self) -> list:
 
         resp = self._query_to_dicts('SELECT * FROM home_jobs')
-        print("\nAll jobs:")
-        for job in resp:
-            print('%2d: %s' % (job['task_id'],job['job_name']))
+        # print("\nAll jobs:")
+        # for job in resp:
+        #     print('%2d: %s' % (job['task_id'],job['job_name']))
 
         return resp
     
     def get_active_tasks(self) -> dict:
         resp = self._query_to_dicts('SELECT * FROM home_jobs WHERE is_done = FALSE')
         
-        print("\nActive jobs:")
-        for job in resp:
-            print('%2d: %s' % (job['task_id'],job['job_name']))
+        # print("\nActive jobs:")
+        # for job in resp:
+        #     print('%2d: %s' % (job['task_id'],job['job_name']))
 
         return resp
 
@@ -406,6 +433,13 @@ if __name__=='__main__':
     db = TaskDatabaseSQL()
     self=db
     
+    
+    r = db.get_all_tasks() 
+    r[0]['created_at']
+    
+    
+    
+    # wevwev
     # print(   db.get_all_tasks()   )
     
     # print(   db.get_active_tasks()   )
